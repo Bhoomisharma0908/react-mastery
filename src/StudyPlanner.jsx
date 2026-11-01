@@ -1,11 +1,19 @@
 
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef
+} from "react";
+
 import Navbar from "./Navbar";
 import CourseCard from "./CourseCard";
 import TaskCard from "./TaskCard";
 import "./App.css";
 
-function App() {
+
+function StudyPlanner() {
 
   // =================================
   // COURSE STATES
@@ -47,23 +55,74 @@ function App() {
 
 
   // =================================
-  // USE EFFECT
+  // USEREF
   // =================================
 
-  // Update browser tab title whenever tasks change
+  const taskTitleInputRef = useRef(null);
+
+
+  // =================================
+  // USEEFFECT
+  // =================================
+
+  // Update browser tab title
+
   useEffect(() => {
+
     document.title = `Study Planner - ${tasks.length} Tasks`;
+
   }, [tasks]);
 
-  // Save courses
+
+  // Save courses in Local Storage
+
   useEffect(() => {
-    localStorage.setItem("courses", JSON.stringify(courses));
+
+    localStorage.setItem(
+      "courses",
+      JSON.stringify(courses)
+    );
+
   }, [courses]);
 
-  // Save tasks
+
+  // Save tasks in Local Storage
+
   useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
+
+    localStorage.setItem(
+      "tasks",
+      JSON.stringify(tasks)
+    );
+
   }, [tasks]);
+
+
+  // =================================
+  // USEMEMO
+  // =================================
+
+  // Calculate completed tasks
+
+  const completedTasks = useMemo(() => {
+
+    return tasks.filter(
+      (task) => task.completed
+    ).length;
+
+  }, [tasks]);
+
+
+  // Calculate pending tasks
+
+  const pendingTasks = useMemo(() => {
+
+    return tasks.filter(
+      (task) => !task.completed
+    ).length;
+
+  }, [tasks]);
+
 
   // =================================
   // COURSE FUNCTIONS
@@ -76,8 +135,10 @@ function App() {
     event.preventDefault();
 
     if (newCourse.trim() === "") {
+
       setError("Course name is required.");
       return;
+
     }
 
     if (
@@ -86,8 +147,10 @@ function App() {
           course.toLowerCase() === newCourse.trim().toLowerCase()
       )
     ) {
+
       setError("This course already exists.");
       return;
+
     }
 
     setCourses([...courses, newCourse.trim()]);
@@ -103,7 +166,9 @@ function App() {
   function deleteCourse(courseToDelete) {
 
     setCourses(
-      courses.filter((course) => course !== courseToDelete)
+      courses.filter(
+        (course) => course !== courseToDelete
+      )
     );
 
   }
@@ -134,35 +199,40 @@ function App() {
 
   function addTask(newTask) {
 
-    setTasks([...tasks, newTask]);
+    setTasks((previousTasks) => [
+      ...previousTasks,
+      newTask
+    ]);
 
   }
 
 
   // Delete Task
 
-  function deleteTask(taskId) {
+  const deleteTask = useCallback((taskId) => {
 
-    setTasks(
-      tasks.filter((task) => task.id !== taskId)
+    setTasks((previousTasks) =>
+      previousTasks.filter(
+        (task) => task.id !== taskId
+      )
     );
 
-  }
+  }, []);
 
 
   // Toggle Task Completion
 
-  function toggleTask(taskId) {
+  const toggleTask = useCallback((taskId) => {
 
-    setTasks(
-      tasks.map((task) =>
+    setTasks((previousTasks) =>
+      previousTasks.map((task) =>
         task.id === taskId
           ? { ...task, completed: !task.completed }
           : task
       )
     );
 
-  }
+  }, []);
 
 
   // Handle Task Form Submission
@@ -172,8 +242,11 @@ function App() {
     event.preventDefault();
 
     if (taskTitle.trim() === "") {
+
       setTaskError("Task title is required.");
+      taskTitleInputRef.current.focus();
       return;
+
     }
 
     const newTask = {
@@ -214,6 +287,19 @@ function App() {
 
 
       {/* ================================= */}
+      {/* TASK STATISTICS */}
+      {/* ================================= */}
+
+      <h2>Task Statistics</h2>
+
+      <p>Total Tasks: {tasks.length}</p>
+
+      <p>Completed Tasks: {completedTasks}</p>
+
+      <p>Pending Tasks: {pendingTasks}</p>
+
+
+      {/* ================================= */}
       {/* ADD TASK SECTION */}
       {/* ================================= */}
 
@@ -224,6 +310,7 @@ function App() {
         {/* Task Title */}
 
         <input
+          ref={taskTitleInputRef}
           type="text"
           placeholder="Enter task title"
           value={taskTitle}
@@ -388,7 +475,8 @@ function App() {
 
 }
 
-export default App;
+export default StudyPlanner;
+
 
 
 
